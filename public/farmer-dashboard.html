@@ -12,15 +12,126 @@
             <h1 class="text-2xl font-bold">AgriSmart Hub - Farmer Dashboard</h1>
             <nav>
                 <a href="products.html" class="ml-4 hover:underline">Browse Products</a>
+                <a href="cart.html" class="ml-4 hover:underline">Cart</a>
                 <a href="logout.php" class="ml-4 hover:underline">Logout</a>
             </nav>
         </div>
     </header>
     <main class="container mx-auto p-6">
         <h2 class="text-xl font-semibold mb-4 text-green-800">Welcome, Farmer!</h2>
-        <div class="bg-white rounded shadow p-4">
+        <div class="bg-white rounded shadow p-4 mb-6">
             <p>Use the navigation above to browse products, track orders, and manage your account.</p>
         </div>
+        <div class="bg-white rounded shadow p-4">
+            <div class="flex mb-4 gap-4">
+                <button id="tabDashboard" class="px-4 py-2 rounded bg-green-600 text-white">Dashboard</button>
+                <button id="tabOrders" class="px-4 py-2 rounded bg-green-100 text-green-800">Orders</button>
+            </div>
+            <div id="dashboardSection">
+                <!-- Dashboard content here -->
+            </div>
+            <div id="ordersSection" class="hidden">
+                <h3 class="text-lg font-bold mb-4">Your Orders</h3>
+                <div id="ordersLoading" class="text-green-700">Loading orders...</div>
+                <div id="ordersList" class="hidden"></div>
+            </div>
+        </div>
+        <!-- Order Detail Modal -->
+        <div id="orderModal" class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 hidden">
+            <div class="bg-white rounded shadow-lg p-6 w-full max-w-lg relative">
+                <button id="closeOrderModal" class="absolute top-2 right-2 text-gray-500 hover:text-red-500">&times;</button>
+                <div id="orderModalContent"></div>
+            </div>
+        </div>
     </main>
+    <script>
+    // Tab switching
+    document.getElementById('tabDashboard').onclick = function() {
+        document.getElementById('dashboardSection').classList.remove('hidden');
+        document.getElementById('ordersSection').classList.add('hidden');
+        this.classList.add('bg-green-600','text-white');
+        document.getElementById('tabOrders').classList.remove('bg-green-600','text-white');
+        document.getElementById('tabOrders').classList.add('bg-green-100','text-green-800');
+    };
+    document.getElementById('tabOrders').onclick = function() {
+        document.getElementById('dashboardSection').classList.add('hidden');
+        document.getElementById('ordersSection').classList.remove('hidden');
+        this.classList.add('bg-green-600','text-white');
+        document.getElementById('tabDashboard').classList.remove('bg-green-600','text-white');
+        document.getElementById('tabDashboard').classList.add('bg-green-100','text-green-800');
+        loadOrders();
+    };
+    // Orders fetching and rendering
+    async function loadOrders() {
+        const loading = document.getElementById('ordersLoading');
+        const listDiv = document.getElementById('ordersList');
+        loading.classList.remove('hidden');
+        listDiv.classList.add('hidden');
+        try {
+            const res = await fetch('../src/farmer_orders.php');
+            const data = await res.json();
+            if (!data.success || !data.orders.length) {
+                listDiv.innerHTML = '<div class="text-gray-500">No orders found.</div>';
+            } else {
+                listDiv.innerHTML = `<table class='w-full text-left border'>
+                    <thead><tr class='bg-green-100'><th>Date</th><th>Status</th><th>Total</th><th>Items</th><th></th></tr></thead>
+                    <tbody>
+                    ${data.orders.map(o => `
+                        <tr class='border-b'>
+                            <td>${o.created_at ? o.created_at.substring(0,16).replace('T',' ') : ''}</td>
+                            <td>${o.status}</td>
+                            <td>KSh ${o.total}</td>
+                            <td>${o.items}</td>
+                            <td><button class='text-green-700 underline' onclick='showOrderModal(${JSON.stringify(JSON.stringify(o))})'>Details</button></td>
+                        </tr>
+                    `).join('')}
+                    </tbody></table>`;
+            }
+            listDiv.classList.remove('hidden');
+            loading.classList.add('hidden');
+        } catch {
+            loading.textContent = 'Failed to load orders.';
+        }
+    }
+    // Order detail modal logic
+    window.showOrderModal = function(orderStr) {
+        const o = JSON.parse(orderStr);
+        const modal = document.getElementById('orderModal');
+        const content = document.getElementById('orderModalContent');
+        content.innerHTML = `
+            <h4 class='text-lg font-bold mb-2'>Order #${o.id}</h4>
+            <div class='mb-2'><span class='font-semibold'>Date:</span> ${o.created_at ? o.created_at.substring(0,16).replace('T',' ') : ''}</div>
+            <div class='mb-2'><span class='font-semibold'>Status:</span> ${o.status}</div>
+            <div class='mb-2'><span class='font-semibold'>Payment:</span> ${o.payment_status}</div>
+            <div class='mb-2'><span class='font-semibold'>Delivery/Pickup:</span> ${o.delivery_option === 'delivery' ? 'Home Delivery' : 'Pickup from collection point'}</div>
+            <div class='mb-2'><span class='font-semibold'>Total:</span> KSh ${o.total}</div>
+            <div class='mb-2'><span class='font-semibold'>Items:</span> ${o.items}</div>
+            <div class='mt-4 flex gap-4'>
+                <a href='../src/receipt.php?order_id=${o.id}' target='_blank' class='bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700'>View Receipt</a>
+                ${o.status === 'pending' ? `<button id='cancelOrderBtn' class='bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700'>Cancel Order</button>` : ''}
+            </div>
+        `;
+        if (o.status === 'pending') {
+            document.getElementById('cancelOrderBtn').onclick = async function() {
+                if (!confirm('Are you sure you want to cancel this order?')) return;
+                const resp = await fetch('../src/farmer_orders.php', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({action: 'cancel', order_id: o.id})
+                });
+                const data = await resp.json();
+                alert(data.message || 'Order cancelled.');
+                document.getElementById('orderModal').classList.add('hidden');
+                loadOrders();
+            };
+        }
+        modal.classList.remove('hidden');
+    }
+    document.getElementById('closeOrderModal').onclick = function() {
+        document.getElementById('orderModal').classList.add('hidden');
+    };
+    // By default show dashboard
+    document.getElementById('tabDashboard').click();
+    </script>
 </body>
 </html>

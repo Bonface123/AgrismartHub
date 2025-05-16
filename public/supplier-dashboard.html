@@ -54,7 +54,10 @@
             <div id="feedbackSection" class="hidden">
                 <div class="bg-white rounded shadow p-4">
                     <h3 class="text-lg font-bold mb-4">Customer Feedback & Reviews</h3>
-                    <div id="feedbackContent">(Coming soon: customer reviews for your products)</div>
+                    <div id="feedbackContent" class="space-y-6">
+    <div id="feedbackLoading" class="text-yellow-700">Loading feedback...</div>
+    <div id="feedbackList" class="hidden"></div>
+</div>
                 </div>
             </div>
         </div>
@@ -147,11 +150,51 @@ document.getElementById('tabProducts').onclick = function() {
         // loadAnalyticsData(); // To be implemented
     };
     document.getElementById('tabFeedback').onclick = function() {
-        setActiveTab('tabFeedback');
-        // loadFeedbackData(); // To be implemented
-    };
+    setActiveTab('tabFeedback');
+    loadFeedbackContent();
+};
     // Set default tab
     setActiveTab('tabProducts');
+
+    // --- Feedback Content Loader ---
+    function loadFeedbackContent() {
+        const loading = document.getElementById('feedbackLoading');
+        const listDiv = document.getElementById('feedbackList');
+        loading.classList.remove('hidden');
+        listDiv.classList.add('hidden');
+        fetch('../src/supplier_feedback.php')
+            .then(res => res.json())
+            .then(data => {
+                if (!data.success) throw new Error('Failed to load feedback');
+                if (!data.feedback || data.feedback.length === 0) {
+                    listDiv.innerHTML = '<div class="text-gray-500">No feedback found for your products.</div>';
+                } else {
+                    listDiv.innerHTML = data.feedback.map(f => `
+                        <div class="border rounded p-4 bg-yellow-50 shadow">
+                            <div class="flex justify-between items-center mb-2">
+                                <div class="font-semibold text-yellow-900">${f.product_name}</div>
+                                <div class="text-yellow-700 text-sm">${f.avg_rating} ★ (${f.total_reviews} reviews)</div>
+                            </div>
+                            <div>
+                                ${f.reviews.map(r => `
+                                    <div class="border-b border-yellow-100 py-2 flex flex-col md:flex-row md:items-center md:gap-4">
+                                        <span class="font-semibold text-yellow-800">${r.reviewer}</span>
+                                        <span class="text-yellow-600">${r.rating} ★</span>
+                                        <span class="text-gray-700 flex-1">${r.review}</span>
+                                        <span class="text-xs text-gray-400">${r.created_at ? r.created_at.substring(0,16).replace('T',' ') : ''}</span>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    `).join('');
+                }
+                listDiv.classList.remove('hidden');
+                loading.classList.add('hidden');
+            })
+            .catch(() => {
+                loading.textContent = 'Failed to load feedback.';
+            });
+    }
 
     // --- Orders Table ---
     async function loadOrdersTable() {

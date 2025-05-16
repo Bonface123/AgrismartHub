@@ -12,6 +12,7 @@
       <h1 class="text-2xl font-bold">AgriSmart Hub - Products</h1>
       <nav>
         <a href="farmer-dashboard.html" class="ml-4 hover:underline">Dashboard</a>
+        <a href="cart.html" class="ml-4 hover:underline">Cart</a>
         <a href="logout.php" class="ml-4 hover:underline">Logout</a>
       </nav>
     </div>
@@ -37,17 +38,30 @@
         url += '?' + new URLSearchParams(params);
       }
       const res = await fetch(url);
-      const products = await res.json();
+      const data = await res.json();
       const list = document.getElementById('productList');
       list.innerHTML = '';
-      if (!products.length) {
+      if (!data.success) {
+        list.innerHTML = '<div class="col-span-3 text-center text-red-500">You must be logged in as a farmer to view products.</div>';
+        return;
+      }
+      if (!data.products || !data.products.length) {
         list.innerHTML = '<div class="col-span-3 text-center text-gray-500">No products found.</div>';
         return;
       }
-      for (const p of products) {
+      for (const p of data.products) {
+        // Fetch the first image for this product
+        let imgSrc = p.image || 'https://via.placeholder.com/150';
+        try {
+          const imgRes = await fetch(`../src/get_product_images.php?product_id=${p.id}`);
+          const imgData = await imgRes.json();
+          if (imgData.success && imgData.images.length > 0) {
+            imgSrc = '../' + imgData.images[0].image_url;
+          }
+        } catch {}
         list.innerHTML += `<div class="bg-white shadow rounded p-4 flex flex-col">
           <a href="product-details.html?id=${p.id}">
-            <img src="${p.image || 'https://via.placeholder.com/150'}" class="mb-2 w-full h-40 object-cover rounded" alt="${p.name}">
+            <img src="${imgSrc}" class="mb-2 w-full h-40 object-cover rounded" alt="${p.name}">
             <div class="font-bold text-lg mb-1 underline text-green-800">${p.name}</div>
           </a>
           <div class="text-sm text-gray-600 mb-1">${p.brand || ''}</div>
@@ -55,7 +69,6 @@
           <div class="mb-2">Category: <span class="font-semibold">${p.category}</span></div>
           <div class="mb-2">Price: <span class="font-semibold">KSh ${p.price}</span></div>
           <div class="mb-2">Stock: <span class="font-semibold">${p.stock}</span></div>
-          <div class="mb-2">Rating: <span class="font-semibold">${p.rating}</span></div>
         </div>`;
       }
     }

@@ -33,9 +33,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         $total += $products[$pid]['price'] * $qty;
     }
+    // Get delivery option
+    $input = json_decode(file_get_contents('php://input'), true);
+    $delivery_option = $input['delivery_option'] ?? 'pickup';
     // Insert order
-    $stmt = $pdo->prepare('INSERT INTO orders (user_id, status, total, payment_status, created_at) VALUES (?, ?, ?, ?, NOW())');
-    $stmt->execute([$_SESSION['user_id'], 'pending', $total, 'pending']);
+    $stmt = $pdo->prepare('INSERT INTO orders (user_id, status, total, payment_status, delivery_option, created_at) VALUES (?, ?, ?, ?, ?, NOW())');
+    $stmt->execute([$_SESSION['user_id'], 'pending', $total, 'pending', $delivery_option]);
     $order_id = $pdo->lastInsertId();
     $stmt = $pdo->prepare('INSERT INTO order_items (order_id, product_id, quantity, price) VALUES (?, ?, ?, ?)');
     foreach ($cart as $pid => $qty) {
