@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verify OTP - AgriSmart Hub</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-blue-50 flex items-center justify-center min-h-screen">
+    <div class="bg-white p-8 rounded shadow-md w-full max-w-md">
+        <h2 class="text-2xl font-bold mb-6 text-blue-700">Verify Your Email</h2>
+        <form id="otpForm" method="POST" action="../src/verify_otp.php">
+            <div class="mb-4">
+                <label class="block mb-1 font-semibold">Email</label>
+                <input type="email" name="email" required class="w-full border rounded px-3 py-2" value="" id="emailField">
+            </div>
+            <div class="mb-6">
+                <label class="block mb-1 font-semibold">OTP Code</label>
+                <input type="text" name="otp" required maxlength="6" class="w-full border rounded px-3 py-2">
+            </div>
+            <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700">Verify</button>
+        </form>
+        <p class="mt-4 text-center">Didn't receive the code? <a href="#" class="text-blue-700 underline">Resend OTP</a></p>
+    </div>
+    <script>
+      // Prefill email if passed as URL param
+      const params = new URLSearchParams(window.location.search);
+      if(params.has('email')) {
+        document.getElementById('emailField').value = params.get('email');
+      }
+    </script>
+</body>
+</html>

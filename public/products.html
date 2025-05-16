@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Product Catalog - AgriSmart Hub</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-50 min-h-screen">
+  <header class="bg-green-700 text-white p-4 shadow">
+    <div class="container mx-auto flex justify-between items-center">
+      <h1 class="text-2xl font-bold">AgriSmart Hub - Products</h1>
+      <nav>
+        <a href="farmer-dashboard.html" class="ml-4 hover:underline">Dashboard</a>
+        <a href="logout.php" class="ml-4 hover:underline">Logout</a>
+      </nav>
+    </div>
+  </header>
+  <main class="container mx-auto p-6">
+    <h2 class="text-xl font-semibold mb-4 text-green-800">Browse Products</h2>
+    <form class="mb-6 flex flex-wrap gap-4" id="filterForm">
+      <input type="text" name="search" placeholder="Search products..." class="border rounded px-3 py-2">
+      <select name="category" class="border rounded px-3 py-2">
+        <option value="">All Categories</option>
+        <option value="fertilizer">Fertilizer</option>
+        <option value="seed">Seed</option>
+        <option value="pesticide">Pesticide</option>
+      </select>
+      <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded">Filter</button>
+    </form>
+    <div id="productList" class="grid grid-cols-1 md:grid-cols-3 gap-6"></div>
+  </main>
+  <script>
+    async function fetchProducts(params = {}) {
+      let url = '../src/products.php';
+      if (Object.keys(params).length) {
+        url += '?' + new URLSearchParams(params);
+      }
+      const res = await fetch(url);
+      const products = await res.json();
+      const list = document.getElementById('productList');
+      list.innerHTML = '';
+      if (!products.length) {
+        list.innerHTML = '<div class="col-span-3 text-center text-gray-500">No products found.</div>';
+        return;
+      }
+      for (const p of products) {
+        list.innerHTML += `<div class="bg-white shadow rounded p-4 flex flex-col">
+          <a href="product-details.html?id=${p.id}">
+            <img src="${p.image || 'https://via.placeholder.com/150'}" class="mb-2 w-full h-40 object-cover rounded" alt="${p.name}">
+            <div class="font-bold text-lg mb-1 underline text-green-800">${p.name}</div>
+          </a>
+          <div class="text-sm text-gray-600 mb-1">${p.brand || ''}</div>
+          <div class="text-sm text-gray-700 mb-2">${p.description || ''}</div>
+          <div class="mb-2">Category: <span class="font-semibold">${p.category}</span></div>
+          <div class="mb-2">Price: <span class="font-semibold">KSh ${p.price}</span></div>
+          <div class="mb-2">Stock: <span class="font-semibold">${p.stock}</span></div>
+          <div class="mb-2">Rating: <span class="font-semibold">${p.rating}</span></div>
+        </div>`;
+      }
+    }
+    document.getElementById('filterForm').onsubmit = function(e) {
+      e.preventDefault();
+      const search = this.search.value.trim();
+      const category = this.category.value;
+      fetchProducts({search, category});
+    };
+    fetchProducts();
+  </script>
+</body>
+</html>

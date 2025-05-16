@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - AgriSmart Hub</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <header class="bg-gray-800 text-white p-4 shadow">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="text-2xl font-bold">AgriSmart Hub - Admin Dashboard</h1>
+            <nav>
+                <a href="products.html" class="ml-4 hover:underline">View Products</a>
+                <a href="logout.php" class="ml-4 hover:underline">Logout</a>
+            </nav>
+        </div>
+    </header>
+    <main class="container mx-auto p-6">
+        <h2 class="text-xl font-semibold mb-4 text-gray-800">Welcome, Admin!</h2>
+        <div class="bg-white rounded shadow p-4 mb-6">
+            <p>Monitor platform activity, manage users, products, and orders here.</p>
+        </div>
+        <div class="mb-8">
+            <h3 class="text-lg font-bold mb-2">Users</h3>
+            <div id="users-section" class="overflow-x-auto"></div>
+        </div>
+        <div class="mb-8">
+            <h3 class="text-lg font-bold mb-2">Products</h3>
+            <div id="products-section" class="overflow-x-auto"></div>
+        </div>
+        <div class="mb-8">
+            <h3 class="text-lg font-bold mb-2">Orders</h3>
+            <div id="orders-section" class="overflow-x-auto"></div>
+        </div>
+    </main>
+    <script>
+    // Fetch and render users
+    function fetchUsers() {
+        fetch('../src/admin_users.php')
+            .then(r => r.json())
+            .then(users => {
+                let html = `<table class='min-w-full text-xs'><thead><tr><th>ID</th><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th>Actions</th></tr></thead><tbody>`;
+                users.forEach(u => {
+                    html += `<tr class='border-b'>
+                        <td>${u.id}</td>
+                        <td>${u.name}</td>
+                        <td>${u.email}</td>
+                        <td>${u.role}</td>
+                        <td>${u.is_blocked ? 'Blocked' : 'Active'}</td>
+                        <td>
+                            <button onclick="userAction('block',${u.id})" class='text-red-600 mr-1'>Block</button>
+                            <button onclick="userAction('unblock',${u.id})" class='text-green-600 mr-1'>Unblock</button>
+                            <button onclick="userAction('delete',${u.id})" class='text-gray-600 mr-1'>Delete</button>
+                            <button onclick="userAction('promote',${u.id})" class='text-blue-600 mr-1'>Promote</button>
+                            <button onclick="userAction('demote',${u.id})" class='text-yellow-600'>Demote</button>
+                        </td>
+                    </tr>`;
+                });
+                html += '</tbody></table>';
+                document.getElementById('users-section').innerHTML = html;
+            });
+    }
+    function userAction(action, user_id) {
+        fetch('../src/admin_users.php', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({action, user_id})
+        }).then(() => fetchUsers());
+    }
+    // Fetch and render products
+    function fetchProducts() {
+        fetch('../src/admin_products.php')
+            .then(r => r.json())
+            .then(products => {
+                let html = `<table class='min-w-full text-xs'><thead><tr><th>ID</th><th>Name</th><th>Supplier</th><th>Price</th><th>Category</th><th>Status</th><th>Actions</th></tr></thead><tbody>`;
+                products.forEach(p => {
+                    html += `<tr class='border-b'>
+                        <td>${p.id}</td>
+                        <td>${p.name}</td>
+                        <td>${p.supplier_name || ''}</td>
+                        <td>${p.price}</td>
+                        <td>${p.category}</td>
+                        <td>${p.status}</td>
+                        <td>
+                            <button onclick="productAction('approve',${p.id})" class='text-green-600 mr-1'>Approve</button>
+                            <button onclick="productAction('reject',${p.id})" class='text-red-600 mr-1'>Reject</button>
+                            <button onclick="productAction('delete',${p.id})" class='text-gray-600'>Delete</button>
+                        </td>
+                    </tr>`;
+                });
+                html += '</tbody></table>';
+                document.getElementById('products-section').innerHTML = html;
+            });
+    }
+    function productAction(action, product_id) {
+        fetch('../src/admin_products.php', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({action, product_id})
+        }).then(() => fetchProducts());
+    }
+    // Fetch and render orders
+    function fetchOrders() {
+        fetch('../src/admin_orders.php')
+            .then(r => r.json())
+            .then(orders => {
+                let html = `<table class='min-w-full text-xs'><thead><tr><th>ID</th><th>Product</th><th>Buyer</th><th>Qty</th><th>Total</th><th>Date</th></tr></thead><tbody>`;
+                orders.forEach(o => {
+                    html += `<tr class='border-b'>
+                        <td>${o.id}</td>
+                        <td>${o.product_name}</td>
+                        <td>${o.buyer_name}</td>
+                        <td>${o.quantity}</td>
+                        <td>${o.total}</td>
+                        <td>${o.created_at}</td>
+                    </tr>`;
+                });
+                html += '</tbody></table>';
+                document.getElementById('orders-section').innerHTML = html;
+            });
+    }
+    // Initial load
+    fetchUsers();
+    fetchProducts();
+    fetchOrders();
+    </script>
+    </main>
+</body>
+</html>

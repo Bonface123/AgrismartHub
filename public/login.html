@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - AgriSmart Hub</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-50 flex items-center justify-center min-h-screen">
+    <div class="bg-white p-8 rounded shadow-md w-full max-w-md">
+        <h2 class="text-2xl font-bold mb-6 text-green-700">Login</h2>
+        <form id="loginForm" method="POST" action="../src/login.php">
+            <div class="mb-4">
+                <label class="block mb-1 font-semibold">Email</label>
+                <input type="email" name="email" required class="w-full border rounded px-3 py-2">
+            </div>
+            <div class="mb-6">
+                <label class="block mb-1 font-semibold">Password</label>
+                <input type="password" name="password" required class="w-full border rounded px-3 py-2">
+            </div>
+            <button type="submit" class="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700">Login</button>
+        </form>
+        <p class="mt-4 text-center">Don't have an account? <a href="register-farmer.html" class="text-green-700 underline">Register as Farmer</a> | <a href="register-supplier.html" class="text-yellow-700 underline">Register as Supplier</a></p>
+    </div>
+</body>
+</html>
